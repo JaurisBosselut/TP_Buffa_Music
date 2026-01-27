@@ -1,0 +1,25 @@
+<html>
+    <head>
+    <meta charset="utf-8">
+    <title>Test web component lecteur audio</title>
+    <script src="./components/audioplayer.js" type="module"></script>
+    <link href='http://fonts.googleapis.com/css?family=Open+Sans:400,600' rel='stylesheet' type='text/css'>
+    </head>
+    <body>
+        <h1>Mon lecteur audio</h1>
+
+        <select id="musicSelector">
+            <option value="Pokemon.mp3">Our Summer in Dewford Town - City Pop</option>
+            <option value="Pokemon1.mp3">Crossing the Sea - City Pop</option>
+            <option value="Pokemon2.mp3">Rustboro City - City Pop</option>
+            <option value="Pokemon3.mp3">National Park - City Pop</option>
+            <option value="Pokemon4.mp3">Shadows of Lavender Town - City Pop</option>
+            <option value="Rebel_Heart.mp3">Rebel_Heart - Arcane</option>
+            <option value="The_Line.mp3">The_Line - Arcane</option>
+            <option value="To_Ashes_and_Blood.mp3">To_Ashes_and_Blood - Arcane</option>
+            <option value="Ma_Meilleure_Ennemie.mp3">Ma_Meilleure_Ennemie - Arcane</option>
+        </select>
+
+        <my-audio-player id="player" src="Pokemon.mp3"></my-audio-player>
+    </body>
+</html>
