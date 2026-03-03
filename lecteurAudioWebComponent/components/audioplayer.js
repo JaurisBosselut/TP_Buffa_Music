@@ -1,5 +1,9 @@
 // ici un web component qui encapsule un lecteur audio HTLML5 basique
 import "./libs/webaudiocontrols.js";
+import { AudioEngine } from "./audio-engine.js";
+import "./eq-panel.js";
+import "./audio-visualizers.js";
+import "./playlist-view.js";
 
 let style = `
 <style>
@@ -30,127 +34,34 @@ let style = `
 
 </style>
 `;
-let html = `        
-    <audio id="myplayer" src=""></audio>
-    <button id="playbtn">Play</button>
-    <button id="pausebtn">Pause</button>
-    <button id="prevBtn">⏮ Prev</button>
-    <button id="nextBtn">⏭ Next</button>
-    <button id="shuffleBtn">🔀 Shuffle OFF</button>
+let html = `
+    <playlist-view></playlist-view>
 
-    <br>
-    <label>
-        Volume:
-        <input type="range" id="volumeSlider" min="0" max="1" step="0.01" value="0.5">
-        <span id="volume-value" style="position:relative; top:-5px;">volume = 0.5</span>
+  <audio id="myplayer" src=""></audio>
+  <button id="playbtn">Play</button>
+  <button id="pausebtn">Pause</button>
+  <button id="prevBtn">⏮ Prev</button>
+  <button id="nextBtn">⏭ Next</button>
+  <button id="shuffleBtn">🔀 Shuffle OFF</button>
 
-        Balance:
-        <input type="range" id="balanceSlider" min="-1" max="1" step="0.01" value="0">
-        <span id="balance-value" style="position:relative; top:-5px;">balance = 0</span>
+  <eq-panel></eq-panel>
 
-        Detune:
-        <input id="detuneSlider" type="range" min="-1200" max="1200" step="1" value="0" style="height: 20px; width: 200px;">
-        <span id="detune-value" style="position:relative; top:-5px;">detune = 0</span>
-
-        Gain:
-        <input id="filterGainSlider" type="range" min="-30" max="30" step="1" value="0">
-        <span id="gain-value">gain = 0 dB</span>
-
-    </label>
-    <br><br>
-
-    <div>
-        Frequency: 
-        <input id="frequencySlider" type="range" min="100" max="10000" step="1" value="440" style="height: 20px; width: 200px;">
-        <span id="frequency-value" style="position:relative; top:-5px;">frequency = 440 Hz</span>
-    </div>
-    <br>
-    <div>
-        Q: 
-        <input id="qSlider" type="range" min="0.0001" max="1000" step="0.0001" value="1" style="height: 20px; width: 200px;">
-        <span id="Q-value" style="position:relative; top:-5px;">Q = 1</span>
-
-        <webaudio-knob id="knobVolume" src="bouton.png" min=0 max=1 step=0.01 value=0.5></webaudio-knob>
+  <div id="visualizers">
+    <div id="visualization_waveform">
+      <h2>2D audio visualization: waveform</h2>
+      <waveform-visualizer></waveform-visualizer>
     </div>
 
-    <div>
-        Type:
-        <select id="filtertype">
-            <option value="allpass">allpass</option>
-            <option value="lowpass">lowpass</option>
-            <option value="highpass">highpass</option>
-            <option value="bandpass">bandpass</option>
-            <option value="lowshelf">lowshelf</option>
-            <option value="highshelf">highshelf</option>
-            <option value="peaking">peaking</option>
-            <option value="notch">notch</option>
-        </select>
+    <div id="visualization_frequency">
+      <h2>2D audio visualization: frequency</h2>
+      <frequency-visualizer></frequency-visualizer>
     </div>
 
-    <div>
-        Reverb:
-        <input id="reverbSlider" type="range" min="0" max="1" step="0.01" value="0">
-        <span id="reverb-value">reverb = 0</span>
-        <button id="compressorButton">Turn Compressor On</button>
+    <div id="visualization_volume">
+      <h2>Volume (VU meter)</h2>
+      <vu-meter></vu-meter>
     </div>
-
-
-    <h2>Frequency Response</h2>
-        <p>A sample showing the frequency response graphs of various kinds of <code>BiquadFilterNodes</code>.</p>
-
-    <canvas id="canvasID" width="600" height="300"></canvas>
-
-    <h3>6-Band Equalizer : </h3>
-    <div class="controls">
-        <label>60Hz</label>
-        <input type="range" value="0" step="1" min="-30" max="30" oninput="changeGain(this.value, 0);"></input>
-    <output id="gain0">0 dB</output>
-    </div>
-    <div class="controls">
-        <label>170Hz</label>
-        <input type="range" value="0" step="1" min="-30" max="30" oninput="changeGain(this.value, 1);"></input>
-    <output id="gain1">0 dB</output>
-    </div>
-    <div class="controls">
-        <label>350Hz</label>
-        <input type="range" value="0" step="1" min="-30" max="30" oninput="changeGain(this.value, 2);"></input>
-    <output id="gain2">0 dB</output>
-    </div>
-    <div class="controls">
-        <label>1000Hz</label>
-        <input type="range" value="0" step="1" min="-30" max="30" oninput="changeGain(this.value, 3);"></input>
-    <output id="gain3">0 dB</output>
-    </div>
-    <div class="controls">
-        <label>3500Hz</label>
-        <input type="range" value="0" step="1" min="-30" max="30" oninput="changeGain(this.value, 4);"></input>
-    <output id="gain4">0 dB</output>
-    </div>
-    <div class="controls">
-        <label>10000Hz</label>
-        <input type="range" value="0" step="1" min="-30" max="30" oninput="changeGain(this.value, 5);"></input>
-    <output id="gain5">0 dB</output>
-    </div>
-    <br></br>
-    <div id="visualizers">
-        <div id="visualization_waveform">
-            <h2>2D audio visualization: waveform</h2>
-            <canvas id="waveformCanvas" width="600" height="200"></canvas>
-        </div>
-
-        <div id="visualization_frequency">
-            <h2>2D audio visualization: frequency</h2>
-            <canvas id="frequencyCanvas" width="600" height="200"></canvas>
-        </div>
-
-        <div id="visualization_volume">
-            <h2>Volume (VU meter)</h2>
-            <canvas id="volumeCanvas" width="80" height="200"></canvas>
-        </div>
-
-    </div>
-
-<script> 
+  </div>
 `;
 
 
@@ -161,6 +72,7 @@ class MyAudioPlayer extends HTMLElement {
         // les styles CSS de la page hôte, et ne sera visible dans le debugger que si on coche 
         // la case dans les options du debugger "Show user agent shadow DOM"
         this.attachShadow({ mode: 'open' });
+        this.shadowRoot.innerHTML = style + html;
 
         // On récupère l'attribut src qui contient l'URL du fichier audio à lire
         this.src = this.getAttribute('src');
@@ -178,42 +90,72 @@ class MyAudioPlayer extends HTMLElement {
 
 
     connectedCallback() {
-        // Cette méthode est appelée lorsque le composant est inséré dans la page HTML
-        // on ajoute du HTML et du CSS dans le shadow DOM
-        this.shadowRoot.innerHTML = style + html;
-
-        // on initialise le src de l'élément audio
         const audioElement = this.shadowRoot.querySelector('#myplayer');
-        audioElement.src = this.src;
+        this.engine = new AudioEngine(audioElement);
+        const analyser = this.engine.getAnalyser();
 
-        this.source = this.audioContext.createMediaElementSource(audioElement);
+        const eqPanel = this.shadowRoot.querySelector('eq-panel');
+        if (eqPanel) {
+            eqPanel.engine = this.engine;
+        }
 
+        const waveform = this.shadowRoot.querySelector('waveform-visualizer');
+        if (waveform) {
+            waveform.analyser = analyser;
+        }
 
-        // on définit les listeners pour les boutons et le slider
+        const frequencyVis = this.shadowRoot.querySelector('frequency-visualizer');
+        if (frequencyVis) {
+            frequencyVis.analyser = analyser;
+        }
+
+        const vuMeter = this.shadowRoot.querySelector('vu-meter');
+        if (vuMeter) {
+            vuMeter.analyser = analyser;
+        }
+
+        // playlist interne au composant (indépendante de la page hôte)
+        this.playlist = [
+            "Rebel_Heart.mp3",
+            "The_Line.mp3",
+            "To_Ashes_and_Blood.mp3",
+            "Ma_Meilleure_Ennemie.mp3",
+            "Pokemon.mp3",
+            "Pokemon1.mp3",
+            "Pokemon2.mp3",
+            "Pokemon3.mp3",
+            "Pokemon4.mp3",
+            "Fairytale (Alexander Rybak).mp3",
+            "End Of Beginning (Djo).mp3",
+            "Die With A Smile (Lady Gaga, Bruno Mars).mp3",
+            "Daylight (David Kushner).mp3",
+            "Human (Rag'n'Bone Man).mp3",
+            "Believer (Imagine Dragons).mp3",
+            "Natural (Imagine Dragons).mp3",
+            "Enemy (Imagine Dragons).mp3",
+            "God knows... The Melancholy of Haruhi Suzumiya.mp3",
+        ];
+        this.currentIndex = 0;
+        this.shuffle = false;
+        this.history = [];
+
+        // on démarre toujours sur le premier morceau de la playlist
+        audioElement.src = this.playlist[this.currentIndex];
+
+        this.playlistView = this.shadowRoot.querySelector('playlist-view');
+        if (this.playlistView) {
+            this.playlistView.tracks = this.playlist;
+            this.playlistView.currentIndex = this.currentIndex;
+        }
+
         this.defineListeners();
+
     }
 
     defineListeners() {
         const audioElement = this.shadowRoot.querySelector('#myplayer');
         const playButton = this.shadowRoot.querySelector('#playbtn');
         const pauseButton = this.shadowRoot.querySelector('#pausebtn');
-        const volumeslider = this.shadowRoot.querySelector('#volumeslider');
-        const pannerSlider = this.shadowRoot.querySelector('#balanceslider');
-        const frequencySlider = this.shadowRoot.querySelector('#frequencyslider');
-        const detuneSlider = this.shadowRoot.querySelector('#detuneslider');
-        const qSlider = this.shadowRoot.querySelector('#qslider');
-        const filterTypeSelect = this.shadowRoot.querySelector('#filtertype');
-        const reverbSlider = this.shadowRoot.querySelector('#reverbSlider');
-
-        const gainSliders = [
-            this.shadowRoot.querySelector('#gain0'),
-            this.shadowRoot.querySelector('#gain1'),
-            this.shadowRoot.querySelector('#gain2'),
-            this.shadowRoot.querySelector('#gain3'),
-            this.shadowRoot.querySelector('#gain4'),
-            this.shadowRoot.querySelector('#gain5')
-        ];
-
         const nextBtn = this.shadowRoot.querySelector('#nextBtn');
         const prevBtn = this.shadowRoot.querySelector('#prevBtn');
         const shuffleBtn = this.shadowRoot.querySelector('#shuffleBtn');
@@ -222,94 +164,6 @@ class MyAudioPlayer extends HTMLElement {
             this.shuffle = !this.shuffle;
             shuffleBtn.textContent = this.shuffle ? "🔀 Shuffle ON" : "🔀 Shuffle OFF";
         });
-
-
-        const audioContext = this.audioContext;
-
-
-        const selector = document.getElementById("musicSelector");
-        this.playlist = Array.from(selector.options).map(opt => opt.value);
-        this.currentIndex = selector.selectedIndex || 0;
-        this.shuffle = false;
-        this.history = [];
-
-
-        const player = document.getElementById("player");
-
-        selector.addEventListener("change", (e) => {
-            loadTrack(e.target.selectedIndex);
-        });
-
-
-
-        /* =========================
-        AUDIO NODES et affichage graphe
-        ========================= */
-
-        const source = this.source;
-
-        // EQ
-        const eqFrequencies = [60, 170, 350, 1000, 3500, 10000];
-        const eqFilters = eqFrequencies.map(freq => {
-            const f = audioContext.createBiquadFilter();
-            f.type = "peaking";
-            f.frequency.value = freq;
-            f.Q.value = 1;
-            f.gain.value = 0;
-            return f;
-        });
-
-        // Filtre global
-        const filter = audioContext.createBiquadFilter();
-        filter.type = "allpass";
-
-        const masterGain = audioContext.createGain();
-        masterGain.gain.value = 1;
-
-
-
-        // Compresseur
-        const compressorNode = audioContext.createDynamicsCompressor();
-        let compressorOn = false;
-
-        // Panner
-        const panner = audioContext.createStereoPanner();
-
-        const analyser = audioContext.createAnalyser();
-        analyser.fftSize = 2048; // résolution temporelle
-
-
-        // Reverb
-        const convolver = audioContext.createConvolver();
-        const dryGain = audioContext.createGain();
-        const wetGain = audioContext.createGain();
-
-        dryGain.gain.value = 1;
-        wetGain.gain.value = 0;
-        // Graphe de réponse en fréquence
-        const canvas = this.shadowRoot.querySelector('#canvasID');
-        const frequencyRenderer = this.FilterFrequencyResponseRenderer(canvas, audioContext);
-        frequencyRenderer.draw([...eqFilters, filter]);
-
-        /* =========================
-        ROUTING PROPRE (UNE SEULE CHAÎNE)
-        ========================= */
-
-        // source → EQ
-        source.connect(eqFilters[0]);
-        for (let i = 0; i < eqFilters.length - 1; i++) {
-            eqFilters[i].connect(eqFilters[i + 1]);
-        }
-
-        // EQ → filtre
-        eqFilters[eqFilters.length - 1].connect(filter);
-
-        // connexion par défaut (sans compresseur)
-        filter.connect(masterGain);
-        masterGain.connect(panner);
-        panner.connect(analyser);
-        analyser.connect(dryGain);
-        dryGain.connect(audioContext.destination);
 
         /* =========================
         TRACK LOADING AND NAVIGATION
@@ -324,7 +178,10 @@ class MyAudioPlayer extends HTMLElement {
             const track = this.playlist[this.currentIndex];
             audioElement.src = track;
             audioElement.play();
-            selector.selectedIndex = this.currentIndex;
+
+            if (this.playlistView) {
+                this.playlistView.currentIndex = this.currentIndex;
+            }
         };
 
 
@@ -346,7 +203,6 @@ class MyAudioPlayer extends HTMLElement {
                 this.currentIndex = previousIndex;
                 audioElement.src = this.playlist[this.currentIndex];
                 audioElement.play();
-                selector.selectedIndex = this.currentIndex;
             } else {
                 loadTrack(
                     (this.currentIndex - 1 + this.playlist.length) % this.playlist.length
@@ -354,265 +210,35 @@ class MyAudioPlayer extends HTMLElement {
             }
         };
 
-
         nextBtn.addEventListener('click', nextTrack);
         prevBtn.addEventListener('click', prevTrack);
-
-        /* =========================
-        Gain node
-        ========================= */
-
-        const filterGainSlider = this.shadowRoot.querySelector('#filterGainSlider');
-
-        filterGainSlider.addEventListener('input', e => {
-            const value = parseFloat(e.target.value);
-            filter.gain.value = value;
-            this.shadowRoot.querySelector('#gain-value').textContent = `gain = ${value} dB`;
-            frequencyRenderer.draw([...eqFilters, filter]);
-        });
 
         /* =========================
         UI LISTENERS
         ========================= */
 
         playButton.addEventListener('click', () => {
-            audioContext.resume();
-            audioElement.play();
-            drawWaveform();
-            drawFrequency();
-            drawVolume();
+            this.engine.play();
         });
 
         pauseButton.addEventListener('click', () => {
-            audioElement.pause();
+            this.engine.pause();
         });
 
-        volumeslider.addEventListener('input', e => {
-            audioElement.volume = e.target.value;
-            this.shadowRoot.querySelector('#volume-value').textContent = "volume = " + e.target.value;
-        });
-
-        pannerSlider.addEventListener('input', e => {
-            panner.pan.value = e.target.value;
-            this.shadowRoot.querySelector('#balance-value').textContent = "balance = " + e.target.value;
-        });
-
-        frequencySlider.addEventListener('input', e => {
-            filter.frequency.value = e.target.value;
-            this.shadowRoot.querySelector('#frequency-value').textContent = "frequency = " + e.target.value + " Hz";
-            frequencyRenderer.draw([...eqFilters, filter]);
-        });
-
-        detuneSlider.addEventListener('input', e => {
-            filter.detune.value = e.target.value;
-            this.shadowRoot.querySelector('#detune-value').textContent = "detune = " + e.target.value;
-            frequencyRenderer.draw([...eqFilters, filter]);
-        });
-
-        qSlider.addEventListener('input', e => {
-            filter.Q.value = e.target.value;
-            this.shadowRoot.querySelector('#Q-value').textContent = "Q = " + e.target.value;
-            frequencyRenderer.draw([...eqFilters, filter]);
-        });
-
-        filterTypeSelect.addEventListener('change', e => {
-            filter.type = e.target.value;
-            frequencyRenderer.draw([...eqFilters, filter]);
-        });
-
-        let reverbActive = false;
-
-        reverbSlider.addEventListener('input', e => {
-            const value = parseFloat(e.target.value);
-
-            // dry toujours actif
-            dryGain.gain.value = 1 - value;
-
-            if (value > 0 && !reverbActive) {
-                // activation reverb
-                panner.connect(convolver);
-                convolver.connect(wetGain);
-                wetGain.connect(audioContext.destination);
-                reverbActive = true;
+        audioElement.addEventListener('ended', () => {
+            nextTrack();
+            if (this.playlistView) {
+                this.playlistView.currentIndex = this.currentIndex;
             }
-
-            if (value === 0 && reverbActive) {
-                // bypass total reverb
-                panner.disconnect(convolver);
-                convolver.disconnect(wetGain);
-                wetGain.disconnect(audioContext.destination);
-                reverbActive = false;
-            }
-
-            wetGain.gain.value = value;
-
-            this.shadowRoot.querySelector('#reverb-value').textContent = "reverb = " + value;
         });
 
-
-        /* =========================
-        EQ SLIDERS
-        ========================= */
-
-        window.changeGain = (value, index) => {
-            const dbValue = parseFloat(value);
-            eqFilters[index].gain.value = dbValue;
-            gainSliders[index].textContent = `${dbValue} dB`;
-            frequencyRenderer.draw([...eqFilters, filter]);
-        };
-
-        /* =========================
-        COMPRESSOR TOGGLE
-        ========================= */
-
-        const compressorButton = this.shadowRoot.querySelector('#compressorButton');
-
-        compressorButton.addEventListener('click', () => {
-            filter.disconnect();
-
-            if (compressorOn) {
-                filter.connect(panner); // bypass
-                compressorButton.textContent = "Turn Compressor On";
-            } else {
-                filter.connect(compressorNode);
-                compressorNode.connect(panner);
-                compressorButton.textContent = "Turn Compressor Off";
-            }
-
-            compressorOn = !compressorOn;
-        });
-
-
-        /* =========================
-        REVERB IR
-        ========================= */
-
-        async function loadImpulseResponse(url) {
-            const response = await fetch(url);
-            const buffer = await response.arrayBuffer();
-            convolver.buffer = await audioContext.decodeAudioData(buffer);
+        if (this.playlistView) {
+            this.shadowRoot.addEventListener('track-selected', (e) => {
+                const index = e.detail.index;
+                loadTrack(index);
+                this.playlistView.currentIndex = this.currentIndex;
+            });
         }
-
-        loadImpulseResponse("truc.wav");
-
-
-        /* =========================
-        WAVEFORM VISUALIZATION
-        ========================= */
-
-        const waveformCanvas = this.shadowRoot.querySelector("#waveformCanvas");
-        const waveCtx = waveformCanvas.getContext("2d");
-
-        const bufferLength = analyser.fftSize;
-        const dataArray = new Uint8Array(bufferLength);
-
-        function drawWaveform() {
-            requestAnimationFrame(drawWaveform);
-
-            analyser.getByteTimeDomainData(dataArray);
-
-            waveCtx.clearRect(0, 0, waveformCanvas.width, waveformCanvas.height);
-
-            waveCtx.lineWidth = 2;
-            waveCtx.strokeStyle = "rgb(0, 200, 255)";
-            waveCtx.beginPath();
-
-            const sliceWidth = waveformCanvas.width / bufferLength;
-            let x = 0;
-
-            for (let i = 0; i < bufferLength; i++) {
-                const v = dataArray[i] / 128.0; // [0..255] → [0..2]
-                const y = (v * waveformCanvas.height) / 2;
-
-                if (i === 0) waveCtx.moveTo(x, y);
-                else waveCtx.lineTo(x, y);
-
-                x += sliceWidth;
-            }
-
-            waveCtx.stroke();
-        }
-
-        /* =========================
-        FREQUENCY VISUALIZATION
-        ========================= */
-
-        const frequencyCanvas = this.shadowRoot.querySelector("#frequencyCanvas");
-        const freqCtx = frequencyCanvas.getContext("2d");
-
-        const freqBufferLength = analyser.frequencyBinCount;
-        const freqDataArray = new Uint8Array(freqBufferLength);
-
-        function drawFrequency() {
-            requestAnimationFrame(drawFrequency);
-
-            analyser.getByteFrequencyData(freqDataArray);
-
-            freqCtx.clearRect(0, 0, frequencyCanvas.width, frequencyCanvas.height);
-
-            const barWidth = (frequencyCanvas.width / freqBufferLength) * 2.5;
-            let x = 0;
-
-            for (let i = 0; i < freqBufferLength; i++) {
-                const value = freqDataArray[i];
-                const barHeight = (value / 255) * frequencyCanvas.height;
-
-                freqCtx.fillStyle = "rgb(0, 0, 0)"; // barres noires
-                freqCtx.fillRect(
-                    x,
-                    frequencyCanvas.height - barHeight,
-                    barWidth,
-                    barHeight
-                );
-
-                x += barWidth + 1;
-            }
-        }
-
-        /* =========================
-        VOLUME VISUALIZATION (VU METER)
-        ========================= */
-
-        const volumeCanvas = this.shadowRoot.querySelector("#volumeCanvas");
-        const volCtx = volumeCanvas.getContext("2d");
-
-        const volumeBufferLength = analyser.fftSize;
-        const volumeDataArray = new Uint8Array(volumeBufferLength);
-
-        function drawVolume() {
-            requestAnimationFrame(drawVolume);
-
-            analyser.getByteTimeDomainData(volumeDataArray);
-
-            // calcul RMS
-            let sum = 0;
-            for (let i = 0; i < volumeBufferLength; i++) {
-                const v = (volumeDataArray[i] - 128) / 128; // [-1..1]
-                sum += v * v;
-            }
-            const rms = Math.sqrt(sum / volumeBufferLength); // 0..~1
-
-            // normalisation visuelle
-            const volumeHeight = rms * volumeCanvas.height * 1.4;
-
-            // clear
-            volCtx.clearRect(0, 0, volumeCanvas.width, volumeCanvas.height);
-
-            // couleur type VU
-            let color = "green";
-            if (rms > 0.5) color = "orange";
-            if (rms > 0.75) color = "red";
-
-            volCtx.fillStyle = color;
-            volCtx.fillRect(
-                0,
-                volumeCanvas.height - volumeHeight,
-                volumeCanvas.width,
-                volumeHeight
-            );
-        }
-
-
     }
 
 
